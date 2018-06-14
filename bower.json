@@ -1,0 +1,24 @@
+{
+  "name": "new.project",
+  "authors": [
+    "Nickolays93 <nikolays93@ya.ru>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^3.3.1",
+    "fancybox": "fancyBox#^3.3.5",
+    "slick-carousel": "^1.8.1",
+    "bootstrap": "^4.1.1",
+    "popper.js": "^1.14.3"
+  }
+}
