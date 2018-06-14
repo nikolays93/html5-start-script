@@ -196,4 +196,4 @@ gulp.task('vbuild', [
 gulp.task('init', ['vbuild', 'build']);
 
 // start development
-gulp.task('default', ['build', 'webserver', 'watch']);
+gulp.task('default', ['vbuild', 'build', 'webserver', 'watch']);
