@@ -1,5 +1,7 @@
 'use strict';
 
+var optimizeImgs = false;
+
 var gulp = require('gulp'),
     // html
     rigger = require('gulp-rigger'),
@@ -127,6 +129,11 @@ gulp.task('image:build', function () {
         .pipe(reload({stream: true}));
 });
 
+gulp.task('image:move', function() {
+    gulp.src(path.src.img)
+        .pipe(gulp.dest(path.build.img));
+});
+
 gulp.task('fonts:move', function() {
     gulp.src(path.src.fonts)
         .pipe(gulp.dest(path.build.fonts))
@@ -176,7 +183,10 @@ gulp.task('watch', function(){
         gulp.start('js:build');
     });
     watch([path.watch.img], function(event, cb) {
-        gulp.start('image:build');
+        if( optimizeImgs )
+            gulp.start('image:build');
+        else
+            gulp.start('image:move');
     });
     watch([path.watch.fonts], function(event, cb) {
         gulp.start('fonts:move');
@@ -191,15 +201,18 @@ gulp.task('clean', function (cb) {
     rimraf(dir.base, cb);
 });
 
-// build project
-gulp.task('build', [
+var buildArgs = [
     'html:build',
     'js:build',
     'style:build',
     'bootstrap:build',
-    'fonts:move',
-    'image:build'
-]);
+    'fonts:move'
+];
+
+buildArgs.push( optimizeImgs ? 'image:build' : 'image:move' );
+
+// build project
+gulp.task('build', buildArgs);
 
 // build vendor packages
 gulp.task('move', [
