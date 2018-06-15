@@ -24,31 +24,38 @@ var gulp = require('gulp'),
 var dir = {
     build: 'project/',
     src: 'source/',
-    base: './project',
-    style: 'assets/styles/'
+    assets: 'assets/',
+    base: './project'
 }
+
+dir.style     = dir.assets + 'styles/';
+dir.fonts     = dir.assets + 'fonts/';
+dir.js        = dir.assets + 'js/';
+dir.bootstrap = dir.assets + 'bootstrap/';
 
 var path = {
     build: {
         html: dir.build,
-        js: dir.build + 'assets/',
+        js: dir.build + dir.assets,
         css: dir.build,
         img: dir.build + 'img/',
-        fonts: dir.build + 'assets/fonts/'
+        fonts: dir.build + dir.fonts
     },
     src: {
         html: dir.src + '*.html',
-        js: dir.src + 'assets/js/main.js',
+        js: dir.src + dir.js + 'main.js',
         style: dir.src + 'template_styles.scss',
         img: dir.src + 'img/**/*.*',
-        fonts: dir.src + 'fonts/**/*.*'
+        fonts: dir.src + 'fonts/**/*.*',
+        bootstrap: dir.src + dir.bootstrap + 'bootstrap.scss'
     },
     watch: {
         html: dir.src + '**/*.html',
-        js: dir.src + 'assets/js/**/*.js',
+        js: dir.src + dir.js + '**/*.js',
         style: dir.src + dir.style + '**/*.scss',
         img: dir.src + 'img/**/*.*',
-        fonts: dir.src + 'fonts/**/*.*'
+        fonts: dir.src + 'fonts/**/*.*',
+        bootstrap: dir.src + dir.bootstrap + '**/*.scss'
     },
 };
 
@@ -89,12 +96,23 @@ gulp.task('style:build', function () {
         .pipe(gulp.dest(path.build.html))
         .pipe(reload({stream: true}));
 
-    // copy scss source for next re-compile
-    gulp.src(path.src.style)
-        .pipe(gulp.dest(dir.build));
+    gulp.src(dir.src + 'assets/bootstrap/bootstrap.scss')
+        // .pipe(sourcemaps.init())
+        .pipe(sass().on('error', sass.logError))
+        .pipe(cssmin()) //Сожмем
+        // .pipe(sourcemaps.write())
+        .pipe(rename({ suffix: '.min' }))
+        .pipe(gulp.dest(dir.build + 'assets/'));
+});
 
-    gulp.src(path.watch.style)
-        .pipe(gulp.dest(dir.build + dir.style))
+gulp.task('bootstrap:build', function () {
+    gulp.src(path.src.bootstrap)
+        // .pipe(sourcemaps.init())
+        .pipe(sass().on('error', sass.logError))
+        .pipe(cssmin()) //Сожмем
+        // .pipe(sourcemaps.write())
+        .pipe(rename({ suffix: '.min' }))
+        .pipe(gulp.dest(dir.build + dir.assets));
 });
 
 gulp.task('image:build', function () {
@@ -109,44 +127,39 @@ gulp.task('image:build', function () {
         .pipe(reload({stream: true}));
 });
 
-// move only
-gulp.task('fonts:build', function() {
+gulp.task('fonts:move', function() {
     gulp.src(path.src.fonts)
         .pipe(gulp.dest(path.build.fonts))
 });
 
 /**
- * build vendor packages (use after bower)
+ * move vendor packages (use after bower)
  */
-// move only
-gulp.task('jquery:vbuild', function () {
+gulp.task('jquery:move', function () {
     // jquery
     gulp.src('bower_components/jquery/dist/jquery.min.js')
         .pipe(gulp.dest(path.build.js));
 });
 
-gulp.task('bootstrap:vbuild', function () {
-    gulp.src(dir.src + 'assets/bootstrap/bootstrap.scss')
-        // .pipe(sourcemaps.init())
-        .pipe(sass().on('error', sass.logError))
-        .pipe(cssmin()) //Сожмем
-        // .pipe(sourcemaps.write())
-        .pipe(rename({ suffix: '.min' }))
-        .pipe(gulp.dest(dir.build + 'assets/'))
-});
-
-// move only
-gulp.task('fancybox:vbuild', function () {
+gulp.task('fancybox:move', function () {
     // jquery
     gulp.src('bower_components/fancybox/dist/*.*')
         .pipe(gulp.dest(path.build.js + 'plugins/fancybox/'));
 });
 
-// move only
-gulp.task('slick:vbuild', function () {
+gulp.task('slick:move', function () {
     // jquery
     gulp.src('bower_components/slick-carousel/slick/**/*.*')
         .pipe(gulp.dest(path.build.js + 'plugins/slick/'));
+});
+
+gulp.task('style:move', function () {
+    // copy scss source for next re-compile
+    gulp.src(path.src.style)
+        .pipe(gulp.dest(dir.build));
+
+    gulp.src(path.watch.style)
+        .pipe(gulp.dest(dir.build + dir.style))
 });
 
 gulp.task('watch', function(){
@@ -156,6 +169,9 @@ gulp.task('watch', function(){
     watch([path.watch.style], function(event, cb) {
         gulp.start('style:build');
     });
+    watch([path.watch.bootstrap], function(event, cb) {
+        gulp.start('bootstrap:build');
+    });
     watch([path.watch.js], function(event, cb) {
         gulp.start('js:build');
     });
@@ -163,7 +179,7 @@ gulp.task('watch', function(){
         gulp.start('image:build');
     });
     watch([path.watch.fonts], function(event, cb) {
-        gulp.start('fonts:build');
+        gulp.start('fonts:move');
     });
 });
 
@@ -180,20 +196,21 @@ gulp.task('build', [
     'html:build',
     'js:build',
     'style:build',
-    'fonts:build',
+    'bootstrap:build',
+    'fonts:move',
     'image:build'
 ]);
 
 // build vendor packages
-gulp.task('vbuild', [
-    'jquery:vbuild',
-    'bootstrap:vbuild',
-    'fancybox:vbuild',
-    'slick:vbuild',
+gulp.task('move', [
+    'jquery:move',
+    'fancybox:move',
+    'slick:move',
+    'style:move'
 ]);
 
 // init project (first build | rebuild bootstrap)
-gulp.task('init', ['vbuild', 'build']);
+gulp.task('init', ['move', 'build']);
 
 // start development
-gulp.task('default', ['vbuild', 'build', 'webserver', 'watch']);
+gulp.task('default', ['build', 'webserver', 'watch']);
